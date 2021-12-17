@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+python test.py --dataroot "../data_1858_100_100/test" --netG './results/checkpoints/netG_epoch_155.pth' --netE "./results/checkpoints/netEdge_epoch_155.pth"  --batchSize 1 --imageSize 1024 --write 1 --image_path='./results/inference_1024_test_155'

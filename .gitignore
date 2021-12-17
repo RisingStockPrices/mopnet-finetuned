@@ -1,4 +1,6 @@
 checkpoints/
+aligned.v2/
+edge/
 classifier/
 mopnet/
 models/vgg*
