@@ -1,0 +1,6 @@
+checkpoints/
+classifier/
+mopnet/
+models/vgg*
+__pycache__/
+*.pyc
