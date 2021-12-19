@@ -83,15 +83,16 @@ inputChannelSize = opt.inputChannelSize
 outputChannelSize= opt.outputChannelSize
 
 # create directory to store test results
-image_path=os.path.join(opt.exp_name,'test')
+image_path=os.path.join(opt.exp,'test')
 if os.path.exists(image_path):
   response=input('test directory already exists,,,Overwrite? [y/n]')
   if response=='y':
-    os.remove(image_path)
+    import shutil
+    shutil.rmtree(image_path)
   else:
     raise FileExistsError()
 os.mkdir(image_path)
-os.makedirs([os.path.join(image_path,sub) for sub in ['d','o','g']])
+utils.mkdirs([os.path.join(image_path,sub) for sub in ['d','o','g']])
 
 # Define the models
 netG=net.Single()
@@ -138,6 +139,7 @@ conv2.cuda()
 
 vpsnr=0
 vssim=0
+
 for i, data in enumerate(val_dataloader, 0):
 
     input_cpu, target_cpu = data
@@ -196,9 +198,7 @@ for i, data in enumerate(val_dataloader, 0):
           if opt.write==1:
               cv2.imwrite(os.path.join(image_path,'d','d'+str(i)+'_'+str(j) +'_.png'), mi1)
               cv2.imwrite(os.path.join(image_path,'o','o' + str(i)+'_'+str(j) + "_.png"), ori)
-              cv2.imwrite(os.path.join(image_path, 'g','g' + str(i) + '_' + str(j) + "_.png"), mt1)
-          import pdb; pdb.set_trace()
-              
+              cv2.imwrite(os.path.join(image_path, 'g','g' + str(i) + '_' + str(j) + "_.png"), mt1)              
     
     print(50*'-')
     print(vcnt)

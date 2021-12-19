@@ -44,6 +44,7 @@ parser.add_argument('--dataset', required=False,
   default='my_loader',  help='')
 parser.add_argument('--dataroot', required=False,
   default='./data/custom-data', help='path to trn dataset')
+parser.add_argument('--exp', default='exp', help='folder to output images and model checkpoints')
 parser.add_argument('--netCcol', help="path to classifier color network")
 parser.add_argument('--netCgeo', help="path to classifier geo network")
 parser.add_argument('--netG', default='mopnet/netG_epoch_150.pth', help="path to netG (to continue training)")
@@ -53,6 +54,7 @@ parser.add_argument('--originalSize', type=int,
   default=532, help='the height / width of the original input image')
 parser.add_argument('--imgW', type=int, default=512)
 parser.add_argument('--imgH', type=int, default=512)
+parser.add_argument('--imageCropSize', type=int, default=256)
 parser.add_argument('--pre', type=str, default='', help='prefix of different dataset')
 parser.add_argument('--image_path', type=str, default='results', help='path to save the generated vali image')
 parser.add_argument('--gt_provided', type=bool,default=False)
@@ -80,15 +82,16 @@ inputChannelSize = opt.inputChannelSize
 outputChannelSize= opt.outputChannelSize
 
 # create directory to store test results
-image_path=os.path.join(opt.exp_name,'inference')
+image_path=os.path.join(opt.exp,'inference')
 if os.path.exists(image_path):
   response=input('inference directory already exists,,,Overwrite? [y/n]')
   if response=='y':
-    os.remove(image_path)
+    import shutil
+    shutil.rmtree(image_path)
   else:
     raise FileExistsError()
 os.mkdir(image_path)
-os.makedirs([os.path.join(image_path,sub) for sub in ['d','o','g']])
+utils.mkdirs([os.path.join(image_path,sub) for sub in ['d','o','g']])
 
 
 netG=net.Single()
@@ -101,9 +104,9 @@ netEdge.eval()
 netEdge.to(device)
 print(netG)
 
-target = torch.FloatTensor(opt.batchSize, outputChannelSize, opt.imgH, opt.imgH)
-input = torch.FloatTensor(opt.batchSize, inputChannelSize, opt.imgH, opt.imgW)
-target, input = target.to(device), input.to(device)
+# target = torch.FloatTensor(opt.batchSize, outputChannelSize, opt.imgH, opt.imgH)
+# input = torch.FloatTensor(opt.batchSize, inputChannelSize, opt.imgH, opt.imgW)
+# target, input = target.to(device), input.to(device)
 
 # Classifiers
 net_label_color=net.vgg19ca()
@@ -138,7 +141,12 @@ import os
 mean = ((0.5,0.5,0.5))
 std = ((0.5,0.5,0.5))
 transform = transforms.Compose([ 
-  transforms.Resize(opt.imgH,opt.imgW),
+  transforms.Resize((opt.imgH,opt.imgW)),
+  transforms.ToTensor(),
+  transforms.Normalize(mean, std),])
+
+transform_classifier = transforms.Compose([ 
+  transforms.CenterCrop(opt.imageCropSize),
   transforms.ToTensor(),
   transforms.Normalize(mean, std),])
 
@@ -160,9 +168,17 @@ for file in os.listdir(opt.dataroot):
   with torch.no_grad():
     input.resize_as_(input).copy_(input)
     input = input.unsqueeze(0)
-    target.resize_as_(target).copy_(target)
-    target = target.unsqueeze(0)
+    if opt.gt_provided:
+      target.resize_as_(target).copy_(target)
+      target = target.unsqueeze(0)
 
+    # transformed_image=input.cpu().numpy()
+    
+    # input_cropped=input
+    # input_cropped = transform_classifier(img)
+    # input_cropped = input_cropped.float().to(device)
+    # input_cropped.resize_as(input_cropped).copy_(input_cropped)
+    # input_cropped.
     i_G_x = conv1(input)
     i_G_y = conv2(input)
     iG = torch.tanh(torch.abs(i_G_x)+torch.abs(i_G_y))
@@ -210,9 +226,9 @@ for file in os.listdir(opt.dataroot):
           mt1 = cv2.cvtColor(utils.my_tensor2im(tt1), cv2.COLOR_BGR2RGB)
           cv2.imwrite(image_path + os.sep+'g'+os.sep+file+'.png',mt1)
             
+        import pdb; pdb.set_trace()
     print(50*'-')
     print(vcnt)
     print(50*'-')
 
 print(50*'-')
-          
