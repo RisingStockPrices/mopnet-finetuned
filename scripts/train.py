@@ -88,8 +88,6 @@ subdir_name=['GT_edge','pred_edge','input','output','GT']
 subdirs=[os.path.join(progress_dir,subdir) for subdir in subdir_name]
 utils.mkdirs([progress_dir, checkpoints_dir,*subdirs])
 
-import pdb; pdb.set_trace()
-
 device = torch.device("cuda:0")
 device_classifier = torch.device("cuda:0")
 
@@ -166,8 +164,8 @@ net_label_geo.eval()
 
 # Initialize VGG-16
 vgg = Vgg16()
-utils.init_vgg16('../models/')
-vgg.load_state_dict(torch.load(os.path.join('../models/', "vgg16.weight")))
+utils.init_vgg16('./models')
+vgg.load_state_dict(torch.load(os.path.join('./models/', "vgg16.weight")))
 vgg.to(device)
 
 visualizer = Visualizer(opt.display_port, opt.name)
@@ -381,7 +379,6 @@ for epoch in range(opt.epoch_count, opt.niter):
         for label,image in current_visuals.items():
           image_numpy = utils.tensor2im(image)
           subfolder = label.split('_',1)[-1]
-          #import pdb; pdb.set_trace()
           img_path=os.path.join(progress_dir,subfolder,'epoch%.3d_%d.png'%(epoch,val_cnt))
           utils.save_image(image_numpy,img_path)
 
@@ -395,7 +392,7 @@ for epoch in range(opt.epoch_count, opt.niter):
     with torch.no_grad():
 
         print('hit')
-        my_file = open("./" + opt.name + "_" + "evaluation.txt", 'a+')
+        my_file = open(os.path.join(opt.exp,opt.exp + "_" + "evaluation.txt", 'a+'))
         torch.save(netG.state_dict(), '%s/%s/netG_epoch_%d.pth' % (opt.exp,'checkpoints', epoch))
         torch.save(netEdge.state_dict(), '%s/%s/netEdge_epoch_%d.pth' % (opt.exp, 'checkpoints',epoch))
         vcnt = 0

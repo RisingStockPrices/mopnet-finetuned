@@ -21,7 +21,7 @@ def weights_init(m):
     m.bias.data.fill_(0)
 
 
-def getLoader(datasetName, dataroot, originalSize, imageSize, batchSize=64, workers=4,
+def getLoader(datasetName, dataroot, imageSize, batchSize=64, workers=4,
               mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), split='train', shuffle=True, seed=None, pre="", label_file=""):
   if datasetName == 'my_loader':
     from datasets.my_loader import my_loader as commonDataset
@@ -29,9 +29,8 @@ def getLoader(datasetName, dataroot, originalSize, imageSize, batchSize=64, work
   if split == 'train':
     dataset = commonDataset(root=dataroot,
                             transform=transforms.Compose([
-                              #T.Scale(originalSize),
                               transforms.RandomCrop(imageSize),
-                              #transforms.RandomHorizontalFlip(),
+                              transforms.RandomHorizontalFlip(),
                               transforms.ToTensor(),
                               transforms.Normalize(mean, std),
                             ]),
@@ -41,7 +40,6 @@ def getLoader(datasetName, dataroot, originalSize, imageSize, batchSize=64, work
   else:
     dataset = commonDataset(root=dataroot,
                             transform=transforms.Compose([
-                              #transforms.Resize(1024,512),
                               transforms.CenterCrop(imageSize),
                               transforms.ToTensor(),
                               transforms.Normalize(mean, std),

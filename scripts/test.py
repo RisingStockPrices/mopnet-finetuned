@@ -24,25 +24,22 @@ from misc import *
 import models.mopnet as net
 from models.vgg16 import Vgg16
 from myutils import utils
-from visualizer import Visualizer
-import time
 import torch.nn.functional as F
 import scipy.stats as st
-import datetime
 
-from PIL import Image
-import math
 import numpy as np
 import cv2
 from collections import OrderedDict
 
-import myutils
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--exp', default='exp', help='folder to output images and model checkpoints')
 parser.add_argument('--dataset', required=False,
   default='my_loader',  help='')
 parser.add_argument('--dataroot', required=False,
   default='', help='path to trn dataset')
+parser.add_argument('--netCcol', help="path to classifier color network")
+parser.add_argument('--netCgeo', help="path to classifier geo network")
 parser.add_argument('--netG', default='', help="path to netG (to continue training)")
 parser.add_argument('--netE', default="EdgePredictWeight/netG_epoch_33.pth", help="path to netE (to continue training)")
 parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
@@ -51,7 +48,6 @@ parser.add_argument('--originalSize', type=int,
 parser.add_argument('--imageSize', type=int,
   default=512, help='the height / width of the cropped input image to network')
 parser.add_argument('--pre', type=str, default='', help='prefix of different dataset')
-parser.add_argument('--image_path', type=str, default='', help='path to save the generated vali image')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=1)
 parser.add_argument('--ngf', type=int, default=64)
 parser.add_argument('--ndf', type=int, default=64)
@@ -59,14 +55,9 @@ parser.add_argument('--inputChannelSize', type=int,
   default=3, help='size of the input channels')
 parser.add_argument('--outputChannelSize', type=int,
   default=3, help='size of the output channels')
-parser.add_argument('--record', type=str, default='default.txt', help='prefix of different dataset')
-parser.add_argument('--number', type=int, default=10)
-parser.add_argument('--write', type=int, default=0, help='if write the results?')
+parser.add_argument('--write', type=int, default=1, help='if write the results?')
 opt = parser.parse_args()
 print(opt)
-
-path_class_color = "../classifier/color_epoch_95.pth"
-path_class_geo = "../classifier/geo_epoch_95.pth"
 
 device = torch.device("cuda:0")
 
@@ -91,6 +82,18 @@ val_dataloader = getLoader(opt.dataset,
 inputChannelSize = opt.inputChannelSize
 outputChannelSize= opt.outputChannelSize
 
+# create directory to store test results
+image_path=os.path.join(opt.exp_name,'test')
+if os.path.exists(image_path):
+  response=input('test directory already exists,,,Overwrite? [y/n]')
+  if response=='y':
+    os.remove(image_path)
+  else:
+    raise FileExistsError()
+os.mkdir(image_path)
+os.makedirs([os.path.join(image_path,sub) for sub in ['d','o','g']])
+
+# Define the models
 netG=net.Single()
 netG.load_state_dict(torch.load(opt.netG))
 netG.eval()
@@ -107,11 +110,11 @@ target, input = target.to(device), input.to(device)
 
 # Classifiers
 net_label_color=net.vgg19ca()
-net_label_color.load_state_dict(torch.load(path_class_color))
+net_label_color.load_state_dict(torch.load(opt.netCcol))
 net_label_color=net_label_color.to(device)
 
 net_label_geo = net.vgg19ca_2()
-net_label_geo.load_state_dict(torch.load(path_class_geo))
+net_label_geo.load_state_dict(torch.load(opt.netCgeo))
 net_label_geo=net_label_geo.to(device)
 
 vcnt = 0
@@ -133,27 +136,6 @@ conv2.weight.data.copy_(torch.from_numpy(b))
 conv2.weight.requires_grad = False
 conv2.cuda()
 
-def gauss_kernel(kernlen=21, nsig=3, channels=1):
-    interval = (2 * nsig + 1.) / (kernlen)
-    x = np.linspace(-nsig - interval / 2., nsig + interval / 2., kernlen + 1)
-    kern1d = np.diff(st.norm.cdf(x))
-    kernel_raw = np.sqrt(np.outer(kern1d, kern1d))
-    kernel = kernel_raw / kernel_raw.sum()
-    out_filter = np.array(kernel, dtype=np.float32)
-    out_filter = out_filter.reshape((kernlen, kernlen, 1, 1))
-    out_filter = np.repeat(out_filter, channels, axis=2)
-    return out_filter
-
-# Gaussian blur
-g_kernel = gauss_kernel(3, 5, 1).transpose((3, 2, 1, 0))
-gauss_conv = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=3/2, bias=False)
-gauss_conv.weight.data.copy_(torch.from_numpy(g_kernel))
-gauss_conv.weight.requires_grad = False
-gauss_conv.cuda()
-
-psnr_list = []
-ssim_list = []
-
 vpsnr=0
 vssim=0
 for i, data in enumerate(val_dataloader, 0):
@@ -170,12 +152,6 @@ for i, data in enumerate(val_dataloader, 0):
       i_G_x = conv1(input)
       i_G_y = conv2(input)
       iG = torch.tanh(torch.abs(i_G_x)+torch.abs(i_G_y))
-
-      # jot 같네 이부분 쓰지도 않으면서;;;
-      # res1 = gauss_conv(input[:, 0, :, :].unsqueeze(1))
-      # res2 = gauss_conv(input[:, 1, :, :].unsqueeze(1))
-      # res3 = gauss_conv(input[:, 2, :, :].unsqueeze(1))
-      # input_ = torch.cat((res1, res2, res3), dim=1)
 
       # predict color labels
       _, label_color = torch.max(net_label_color(input), 1)
@@ -201,10 +177,7 @@ for i, data in enumerate(val_dataloader, 0):
       x_hat1 = netG(input, edge, labels)
       residual, x_hat = x_hat1
 
-
-      
       # Save results
-      print(x_hat.shape)
       for j in range(x_hat.shape[0]):
           vcnt += 1
 
@@ -216,20 +189,24 @@ for i, data in enumerate(val_dataloader, 0):
           mi1 = cv2.cvtColor(utils.my_tensor2im(ti1), cv2.COLOR_BGR2RGB)
           mt1 = cv2.cvtColor(utils.my_tensor2im(tt1), cv2.COLOR_BGR2RGB)
           ori = cv2.cvtColor(utils.my_tensor2im(ori), cv2.COLOR_BGR2RGB)
-          vpsnr+=Psnr(mi1,mt1)#psnr_list.extend(myutils.to_psnr(mi1,mt1))
+          vpsnr+=Psnr(mi1,mt1)
           vssim+=ssim(mi1,mt1,multichannel=True)
-          #ssim_list.extend(myutils.to_ssim_skimage(torch.from_numpy(mi1/255.0), torch.from_numpy(mt1/255.0)))
+          
 
           if opt.write==1:
-              cv2.imwrite(opt.image_path + os.sep + 'd'+os.sep+'d'+str(i)+'_'+str(j) +'_.png', mi1)
-              cv2.imwrite(opt.image_path + os.sep+ 'o'+os.sep + 'o' + str(i)+'_'+str(j) + "_.png", ori)
-              cv2.imwrite(opt.image_path + os.sep + 'g' + os.sep + 'g' + str(i) + '_' + str(j) + "_.png", mt1)
+              cv2.imwrite(os.path.join(image_path,'d','d'+str(i)+'_'+str(j) +'_.png'), mi1)
+              cv2.imwrite(os.path.join(image_path,'o','o' + str(i)+'_'+str(j) + "_.png"), ori)
+              cv2.imwrite(os.path.join(image_path, 'g','g' + str(i) + '_' + str(j) + "_.png"), mt1)
+          import pdb; pdb.set_trace()
               
     
     print(50*'-')
     print(vcnt)
     print(50*'-')
 
-avr_psnr = float(vpsnr)/vcnt#sum(psnr_list) / len(psnr_list)
-avr_ssim = float(vssim)/vcnt#sum(ssim_list) / len(ssim_list)
+avr_psnr = float(vpsnr)/vcnt
+avr_ssim = float(vssim)/vcnt
+stats_path = os.path.join(opt.exp,'test','test.txt')
+stats=open(os.path.join(opt.exp,'test','test.txt'),'w')
+stats.write('average psnr : {:>10f}, average ssim : {:>10f} '.format(avr_psnr, avr_ssim))
 print('average psnr : {:>10f}, average ssim : {:>10f} '.format(avr_psnr, avr_ssim))

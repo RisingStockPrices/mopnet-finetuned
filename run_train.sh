@@ -1,8 +1,12 @@
+#################################
+# SET TRAIN PARAMS IN common.sh #
+#################################
 source common.sh
 
-python train.py 
-    --dataroot $data_root/train \
-    --valDataroot $data_root/val \
+# specify cuda device here
+CUDA_VISIBLE_DEVICE=0 python scripts/train.py \
+    --dataroot $dataroot/train \
+    --valDataroot $dataroot/val \
     --exp $exp_name \
     --display_port $display_port \
     --imageSize $imageSize \

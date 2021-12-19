@@ -6,3 +6,6 @@ mopnet/
 models/vgg*
 __pycache__/
 *.pyc
+progress/
+train.log
+*_evaluation.txt
