@@ -9,7 +9,7 @@ netE=$(find ${exp_dir} -name netEdge_epoch_*.pth | sort | tail -n 1)
 
 CUDA_VISIBLE_DEVICE=0 python scripts/inference.py \
     --dataroot $inference_dataroot \
-    --exp $exp_dir \
+    --exp $exp_name \
     --netG $netG \
     --netE $netE \
     --netCcol $CLASSIFIER_PRETRAINED_COLOR \

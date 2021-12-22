@@ -12,8 +12,8 @@ imageSize=256 # applies to test too
 #########################
 # params for inference
 inference_dataroot=./aligned.v2/test/source
-imgW=1920
-imgH=1080
+imgW=1080 #1920
+imgH=720 #1080
 
 
 ######################################

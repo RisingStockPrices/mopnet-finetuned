@@ -9,3 +9,5 @@ __pycache__/
 progress/
 train.log
 *_evaluation.txt
+inference/
+test/

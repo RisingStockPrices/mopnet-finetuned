@@ -161,6 +161,10 @@ for file in os.listdir(opt.dataroot):
 
   input = transform(img)
   input = input.float().to(device)
+  input_cropped=transform_classifier(img)
+  input_cropped = input_cropped.float().to(device)
+  
+
   if opt.gt_provided:
     target = transform(gt_img)
     target = target.float().to(device)
@@ -168,23 +172,19 @@ for file in os.listdir(opt.dataroot):
   with torch.no_grad():
     input.resize_as_(input).copy_(input)
     input = input.unsqueeze(0)
+    input_cropped = input_cropped.unsqueeze(0)
     if opt.gt_provided:
       target.resize_as_(target).copy_(target)
       target = target.unsqueeze(0)
 
-    # transformed_image=input.cpu().numpy()
-    
-    # input_cropped=input
-    # input_cropped = transform_classifier(img)
-    # input_cropped = input_cropped.float().to(device)
-    # input_cropped.resize_as(input_cropped).copy_(input_cropped)
-    # input_cropped.
-    i_G_x = conv1(input)
-    i_G_y = conv2(input)
+
+    i_G_x = conv1(input_cropped)
+    i_G_y = conv2(input_cropped)
     iG = torch.tanh(torch.abs(i_G_x)+torch.abs(i_G_y))
 
+    # import pdb; pdb.set_trace()
     # predict color labels
-    _, label_color = torch.max(net_label_color(input), 1)
+    _, label_color = torch.max(net_label_color(input_cropped), 1)
     label_curve, label_thick = net_label_geo(iG)
     _, label_curve = torch.max(label_curve, 1)
     _, label_thick = torch.max(label_thick, 1)
@@ -218,15 +218,14 @@ for file in os.listdir(opt.dataroot):
         mi1 = cv2.cvtColor(utils.my_tensor2im(ti1), cv2.COLOR_BGR2RGB)
         ori = cv2.cvtColor(utils.my_tensor2im(ori), cv2.COLOR_BGR2RGB)
         
-        cv2.imwrite(image_path + os.sep+'d'+os.sep+file+'.png', mi1)
-        cv2.imwrite(image_path + os.sep+'o'+os.sep+file+'.png',ori)
+        cv2.imwrite(image_path + os.sep+'d'+os.sep+file, mi1)
+        cv2.imwrite(image_path + os.sep+'o'+os.sep+file,ori)
         
         if opt.gt_provided:
           tt1 = target[j, :,:,: ]
           mt1 = cv2.cvtColor(utils.my_tensor2im(tt1), cv2.COLOR_BGR2RGB)
-          cv2.imwrite(image_path + os.sep+'g'+os.sep+file+'.png',mt1)
+          cv2.imwrite(image_path + os.sep+'g'+os.sep+file,mt1)
             
-        import pdb; pdb.set_trace()
     print(50*'-')
     print(vcnt)
     print(50*'-')
