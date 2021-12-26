@@ -54,7 +54,7 @@ def default_loader2(path):
 
 # load paired images with labels
 class my_loader(data.Dataset):
-  def __init__(self, root, transform=None, loader=default_loader2, seed=None, pre="", label_file=''):
+  def __init__(self, root, transform=None, loader=default_loader, seed=None, pre="", label_file=''):
     self.source_path = root+os.sep+pre+"source"
     self.target_path = root+os.sep+pre+"target"
     

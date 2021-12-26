@@ -1,5 +1,5 @@
 checkpoints/
-aligned.v2/
+aligned.v*
 edge/
 classifier/
 mopnet/
@@ -11,3 +11,4 @@ train.log
 *_evaluation.txt
 inference/
 test/
+pretrained*
