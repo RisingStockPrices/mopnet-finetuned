@@ -40,20 +40,24 @@ import torchvision.transforms as transforms
 
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser()
+
+
+## manually set arg default below ##
+parser.add_argument('--dataroot', required=False, default='./aligned', help='path to images for demoire-ing')
+parser.add_argument('--exp', default='inference', help='name of directory to be created to store demoire results')
+parser.add_argument('--netCcol', default='./classifier/color_epoch_95.pth',help="path to classifier color network")
+parser.add_argument('--netCgeo', default='./classifier/geo_epoch_95.pth',help="path to classifier geo network")
+parser.add_argument('--netG', default='checkpoints/netG_epoch_58.pth', help="path to main network checkpoint")
+parser.add_argument('--netE', default="checkpoints/netEdge_epoch_58.pth", help="path to edge network checkpoint")
+parser.add_argument('--imgW', type=int, default=1080)
+parser.add_argument('--imgH', type=int, default=720)
+
+#############################
 parser.add_argument('--dataset', required=False,
   default='my_loader',  help='')
-parser.add_argument('--dataroot', required=False,
-  default='./data/custom-data', help='path to trn dataset')
-parser.add_argument('--exp', default='exp', help='folder to output images and model checkpoints')
-parser.add_argument('--netCcol', help="path to classifier color network")
-parser.add_argument('--netCgeo', help="path to classifier geo network")
-parser.add_argument('--netG', default='mopnet/netG_epoch_150.pth', help="path to netG (to continue training)")
-parser.add_argument('--netE', default="mopnet/netEdge_epoch_150.pth", help="path to netE (to continue training)")
 parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
 parser.add_argument('--originalSize', type=int,
   default=532, help='the height / width of the original input image')
-parser.add_argument('--imgW', type=int, default=512)
-parser.add_argument('--imgH', type=int, default=512)
 parser.add_argument('--imageCropSize', type=int, default=256)
 parser.add_argument('--pre', type=str, default='', help='prefix of different dataset')
 parser.add_argument('--image_path', type=str, default='results', help='path to save the generated vali image')

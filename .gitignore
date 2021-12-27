@@ -2,8 +2,9 @@ aligned.v*
 edge/
 classifier/
 mopnet/
-models/vgg*
 __pycache__/
+models/vgg16.t7
+models/vgg16.weight
 *.pyc
 progress/
 train.log
@@ -11,3 +12,5 @@ train.log
 inference/
 test/
 pretrained*
+*.png
+*.jpg
