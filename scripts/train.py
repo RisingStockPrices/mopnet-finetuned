@@ -374,7 +374,12 @@ for epoch in range(opt.epoch_count, opt.niter):
         t = (time.time() - iter_start_time) / opt.batchSize
         # prints and writes in file our training progress
         trainLogger.write(visualizer.print_current_losses(epoch, epoch_iter, losses, t, t_data) + '\n')
-        
+        visualizer.print_current_losses(epoch, epoch_iter, losses, t, t_data)
+        r = float(epoch_iter) / (dataset_size*opt.batchSize)
+        if opt.display_port!=-1:
+            visualizer.display_current_results(current_visuals, epoch, False)
+            visualizer.plot_current_losses(epoch, r, opt, losses)
+
         # Save current_visuals into image folder
         for label,image in current_visuals.items():
           image_numpy = utils.tensor2im(image)
@@ -392,7 +397,7 @@ for epoch in range(opt.epoch_count, opt.niter):
     with torch.no_grad():
 
         print('hit')
-        my_file = open(os.path.join(opt.exp,opt.exp + "_" + "evaluation.txt", 'a+'))
+        my_file = open(os.path.join(opt.exp,opt.exp + "_" + "evaluation.txt"), 'a+')
         torch.save(netG.state_dict(), '%s/%s/netG_epoch_%d.pth' % (opt.exp,'checkpoints', epoch))
         torch.save(netEdge.state_dict(), '%s/%s/netEdge_epoch_%d.pth' % (opt.exp, 'checkpoints',epoch))
         vcnt = 0

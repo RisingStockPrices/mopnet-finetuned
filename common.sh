@@ -1,7 +1,8 @@
 ########################
 # common params
-dataroot=./aligned.v2
-exp_name=fine-tuning
+dataroot=./aligned.v3
+exp_name=fine-tuning-with-crop
+description='added center cropping as original authors to relieve blurriness in training data'
 
 ########################
 # params for training 
@@ -11,10 +12,12 @@ imageSize=256 # applies to test too
 
 #########################
 # params for inference
-inference_dataroot=./aligned.v2/test/source
+inference_dataroot=./aligned.v3/test/source # image dir
 imgW=1080 #1920
 imgH=720 #1080
-
+inference_dir=./inference #name of folder to save results
+netG=./checkpoints/netG_epoch_58.pth
+netE=./checkpoints/netEdge_epoch_58.pth
 
 ######################################
 # pretrained weights for fine-tuning

@@ -57,7 +57,6 @@ parser.add_argument('--imgH', type=int, default=512)
 parser.add_argument('--imageCropSize', type=int, default=256)
 parser.add_argument('--pre', type=str, default='', help='prefix of different dataset')
 parser.add_argument('--image_path', type=str, default='results', help='path to save the generated vali image')
-parser.add_argument('--gt_provided', type=bool,default=False)
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=1)
 parser.add_argument('--ngf', type=int, default=64)
 parser.add_argument('--ndf', type=int, default=64)
@@ -82,16 +81,16 @@ inputChannelSize = opt.inputChannelSize
 outputChannelSize= opt.outputChannelSize
 
 # create directory to store test results
-image_path=os.path.join(opt.exp,'inference')
+image_path=opt.exp
 if os.path.exists(image_path):
-  response=input('inference directory already exists,,,Overwrite? [y/n]')
+  response=input('inference directory {} already exists,,,Overwrite? [y/n]'.format(image_path))
   if response=='y':
     import shutil
     shutil.rmtree(image_path)
   else:
     raise FileExistsError()
 os.mkdir(image_path)
-utils.mkdirs([os.path.join(image_path,sub) for sub in ['d','o','g']])
+utils.mkdirs([os.path.join(image_path,sub) for sub in ['results','original']])
 
 
 netG=net.Single()
@@ -155,28 +154,16 @@ for file in os.listdir(opt.dataroot):
   
   path = os.path.join(opt.dataroot,file)
   img = Image.open(path).convert('RGB')
-  if opt.gt_provided:
-    gt_path = os.path.join(opt.dataroot.replace('source','target'),file).replace('camImage','sourceImage')
-    gt_img = Image.open(gt_path).convert('RGB')  
 
   input = transform(img)
   input = input.float().to(device)
   input_cropped=transform_classifier(img)
   input_cropped = input_cropped.float().to(device)
   
-
-  if opt.gt_provided:
-    target = transform(gt_img)
-    target = target.float().to(device)
-
   with torch.no_grad():
     input.resize_as_(input).copy_(input)
     input = input.unsqueeze(0)
     input_cropped = input_cropped.unsqueeze(0)
-    if opt.gt_provided:
-      target.resize_as_(target).copy_(target)
-      target = target.unsqueeze(0)
-
 
     i_G_x = conv1(input_cropped)
     i_G_y = conv2(input_cropped)
@@ -218,14 +205,9 @@ for file in os.listdir(opt.dataroot):
         mi1 = cv2.cvtColor(utils.my_tensor2im(ti1), cv2.COLOR_BGR2RGB)
         ori = cv2.cvtColor(utils.my_tensor2im(ori), cv2.COLOR_BGR2RGB)
         
-        cv2.imwrite(image_path + os.sep+'d'+os.sep+file, mi1)
-        cv2.imwrite(image_path + os.sep+'o'+os.sep+file,ori)
-        
-        if opt.gt_provided:
-          tt1 = target[j, :,:,: ]
-          mt1 = cv2.cvtColor(utils.my_tensor2im(tt1), cv2.COLOR_BGR2RGB)
-          cv2.imwrite(image_path + os.sep+'g'+os.sep+file,mt1)
-            
+        cv2.imwrite(image_path + os.sep+'results'+os.sep+file, mi1)
+        cv2.imwrite(image_path + os.sep+'original'+os.sep+file,ori)
+                
     print(50*'-')
     print(vcnt)
     print(50*'-')
