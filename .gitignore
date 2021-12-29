@@ -12,5 +12,4 @@ train.log
 inference/
 test/
 pretrained*
-*.png
-*.jpg
+.idea/
